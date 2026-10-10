@@ -607,6 +607,14 @@ tbody tr:hover {
   word-break: break-word;
 }
 
+.chart-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  margin-top: 3px;
+}
+
 .legend .l-present::before {
   background: var(--green);
 }

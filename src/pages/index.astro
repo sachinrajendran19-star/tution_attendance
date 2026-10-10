@@ -321,14 +321,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
 
     const maxDay = Math.max(...days.map((d) => d.total), 1);
-    const avg = Math.round(days.reduce((sum, d) => sum + d.pct, 0) / days.length);
     const dayWrap = el("div", { class: "chart-wrap" });
     for (const d of days) {
       dayWrap.append(
         el("div", { class: "chart-col" },
           el("span", { class: "chart-pct", text: `${d.pct}%` }),
           stackedBar(d.total, d.present, d.leave, d.absent, maxDay, maxHeight, `${db.readableDate(d.day)} \u2014 ${d.present} present, ${d.absent} absent, ${d.leave} leave (${d.pct}%)`),
-          el("span", { class: "chart-lbl", text: d.day.slice(5) })
+          el("span", { class: "chart-lbl", text: d.day.slice(5) }),
+          el("span", { class: "chart-count", text: `${d.present}`, title: `${d.present} present on ${db.readableDate(d.day)}` })
         )
       );
     }
@@ -341,15 +341,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         el("div", { class: "chart-col chart-col-name" },
           el("span", { class: "chart-pct", text: s.total ? `${s.pct}%` : "\u2014" }),
           stackedBar(s.total, s.present, s.leave, s.absent, maxStudent, maxHeight, `${s.student.name} \u2014 ${s.present} present, ${s.absent} absent, ${s.leave} leave (${s.pct}%)`),
-          el("span", { class: "chart-lbl chart-lbl-name", text: s.student.name })
+          el("span", { class: "chart-lbl chart-lbl-name", text: s.student.name }),
+          el("span", { class: "chart-count", text: `${s.present}`, title: `${s.present} present days` })
         )
       );
     }
 
     panel.append(
-      el("p", { class: "section-label", text: `Attendance by day \u00b7 average ${avg}% over ${days.length} day${days.length > 1 ? "s" : ""}` }),
+      el("p", { class: "section-label", text: `Attendance by day \u00b7 present count under each day (${days.length} day${days.length > 1 ? "s" : ""})` }),
       el("div", { class: "card" }, dayWrap, chartLegend()),
-      el("p", { class: "section-label", style: "margin-top:20px", text: `Attendance by student \u00b7 ${students.length} student${students.length > 1 ? "s" : ""}` }),
+      el("p", { class: "section-label", style: "margin-top:20px", text: `Attendance by student \u00b7 present days under each name` }),
       el("div", { class: "card" }, studentWrap, chartLegend())
     );
   }
