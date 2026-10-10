@@ -1,28 +1,28 @@
 :root {
-  --bg: #0d1117;
-  --bg-panel: rgba(15, 20, 26, 0.82);
-  --bg-input: rgba(9, 12, 17, 0.66);
-  --border: #30363d;
-  --border-strong: #484f58;
-  --glass-border: rgba(255, 255, 255, 0.09);
+  --bg: #ffffff;
+  --bg-panel: rgba(255, 255, 255, 0.78);
+  --bg-input: rgba(255, 255, 255, 0.9);
+  --border: rgba(2, 6, 23, 0.14);
+  --border-strong: rgba(2, 6, 23, 0.32);
+  --glass-border: rgba(2, 6, 23, 0.09);
   --glass-blur: blur(14px) saturate(150%);
-  --accent: #58a6ff;
-  --green: #38bd58;
-  --green-bg: rgba(56, 139, 253, 0.12);
-  --amber: #d29922;
-  --amber-bg: rgba(210, 153, 34, 0.16);
-  --red: #f85149;
-  --red-bg: rgba(248, 81, 73, 0.14);
-  --gray: #8b949e;
-  --muted: #8b949e;
-  --text: #e6edf3;
+  --accent: #0969da;
+  --green: #1a7f37;
+  --green-bg: rgba(26, 127, 55, 0.12);
+  --amber: #9a6700;
+  --amber-bg: rgba(154, 103, 0, 0.14);
+  --red: #cf222e;
+  --red-bg: rgba(207, 34, 46, 0.12);
+  --gray: #57606a;
+  --muted: #4b5563;
+  --text: #0b1220;
   --font:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
   --font-mono: ui-monospace, SFMono-Regular, "Segoe UI Mono", Consolas, "Liberation Mono", monospace;
   --radius: 6px;
   --radius-lg: 12px;
-  --shadow: 0 8px 24px rgba(1, 4, 9, 0.4);
+  --shadow: 0 10px 30px rgba(2, 6, 23, 0.14);
 }
 
 .bg {
@@ -135,11 +135,12 @@ select {
 .day-badge {
   font-family: var(--font-mono);
   font-size: 12px;
+  font-weight: 600;
   color: var(--accent);
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
   white-space: nowrap;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -177,8 +178,8 @@ select {
 }
 
 .tab.active {
-  background: rgba(56, 139, 253, 0.16);
-  color: var(--text);
+  background: rgba(9, 105, 218, 0.12);
+  color: var(--accent);
 }
 
 .panel {
@@ -214,9 +215,9 @@ select {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
   color: var(--text);
   font-weight: 600;
   font-size: 13px;
@@ -228,25 +229,27 @@ select {
 
 .btn:hover {
   border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.05);
 }
 
 .btn-primary {
-  border-color: rgba(46, 160, 67, 0.4);
-  background: rgba(46, 160, 67, 0.2);
+  border-color: rgba(26, 127, 55, 0.5);
+  background: rgba(26, 127, 55, 0.14);
+  color: var(--green);
 }
 
 .btn-primary:hover {
-  background: rgba(46, 160, 67, 0.3);
+  background: rgba(26, 127, 55, 0.22);
 }
 
 .btn-danger {
-  border-color: rgba(248, 81, 73, 0.4);
-  background: rgba(248, 81, 73, 0.15);
+  border-color: rgba(207, 34, 46, 0.45);
+  background: rgba(207, 34, 46, 0.1);
+  color: var(--red);
 }
 
 .btn-danger:hover {
-  background: rgba(248, 81, 73, 0.24);
+  background: rgba(207, 34, 46, 0.18);
 }
 
 .input {
@@ -269,7 +272,7 @@ select {
   border-radius: var(--radius-lg);
   background: var(--bg-panel);
   padding: 16px;
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 }
@@ -352,7 +355,7 @@ select {
   padding: 7px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: transparent;
+  background: var(--bg-input);
   color: var(--muted);
   font-weight: 700;
   font-size: 12px;
@@ -366,23 +369,25 @@ select {
 }
 
 .status-btn.on {
-  color: #fff;
   border-color: currentColor;
 }
 
 .status-btn.present.on {
-  background: rgba(56, 189, 88, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 88, 0.6);
+  color: var(--green);
+  background: rgba(26, 127, 55, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(26, 127, 55, 0.55);
 }
 
 .status-btn.absent.on {
-  background: rgba(248, 81, 73, 0.2);
-  box-shadow: inset 0 0 0 1px rgba(248, 81, 73, 0.6);
+  color: var(--red);
+  background: rgba(207, 34, 46, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(207, 34, 46, 0.55);
 }
 
 .status-btn.leave.on {
-  background: rgba(210, 153, 34, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(210, 153, 34, 0.6);
+  color: var(--amber);
+  background: rgba(154, 103, 0, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(154, 103, 0, 0.55);
 }
 
 .pill {
@@ -397,20 +402,20 @@ select {
 
 .pill.present {
   color: var(--green);
-  border-color: rgba(56, 189, 88, 0.5);
-  background: rgba(56, 189, 88, 0.12);
+  border-color: rgba(26, 127, 55, 0.5);
+  background: rgba(26, 127, 55, 0.12);
 }
 
 .pill.absent {
   color: var(--red);
-  border-color: rgba(248, 81, 73, 0.5);
-  background: rgba(248, 81, 73, 0.12);
+  border-color: rgba(207, 34, 46, 0.5);
+  background: rgba(207, 34, 46, 0.1);
 }
 
 .pill.leave {
   color: var(--amber);
-  border-color: rgba(210, 153, 34, 0.5);
-  background: rgba(210, 153, 34, 0.14);
+  border-color: rgba(154, 103, 0, 0.5);
+  background: rgba(154, 103, 0, 0.12);
 }
 
 .summary {
@@ -470,14 +475,14 @@ th {
 }
 
 tbody tr:hover {
-  background: rgba(1, 4, 9, 0.25);
+  background: rgba(2, 6, 23, 0.05);
 }
 
 .scroll-x {
   overflow-x: auto;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: rgba(13, 17, 23, 0.35);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -528,8 +533,8 @@ tbody tr:hover {
 
 .month-btn.paid {
   color: var(--green);
-  border-color: rgba(56, 189, 88, 0.55);
-  background: rgba(56, 189, 88, 0.16);
+  border-color: rgba(26, 127, 55, 0.55);
+  background: rgba(26, 127, 55, 0.14);
 }
 
 .fee-meta {
@@ -711,9 +716,9 @@ tbody tr:hover {
 .flash {
   padding: 10px 14px;
   margin-bottom: 14px;
-  border: 1px solid rgba(56, 189, 88, 0.5);
+  border: 1px solid rgba(26, 127, 55, 0.5);
   border-radius: var(--radius);
-  background: rgba(56, 189, 88, 0.16);
+  background: rgba(26, 127, 55, 0.14);
   color: #0b3d1c;
   font-weight: 700;
   font-size: 13px;
