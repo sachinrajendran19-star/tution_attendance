@@ -1,7 +1,7 @@
 :root {
   --bg: #0d1117;
-  --bg-panel: rgba(22, 27, 34, 0.55);
-  --bg-input: rgba(13, 17, 23, 0.5);
+  --bg-panel: rgba(15, 20, 26, 0.82);
+  --bg-input: rgba(9, 12, 17, 0.66);
   --border: #30363d;
   --border-strong: #484f58;
   --glass-border: rgba(255, 255, 255, 0.09);
@@ -30,20 +30,7 @@
   inset: 0;
   z-index: -2;
   overflow: hidden;
-  background: var(--bg);
-}
-
-.bg-fill {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  filter: blur(46px) saturate(150%) brightness(0.55);
-  transform: scale(1.2);
-  pointer-events: none;
+  background: #ffffff;
 }
 
 .bg-img {
@@ -58,16 +45,6 @@
   pointer-events: none;
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(rgba(9, 12, 17, 0.68), rgba(9, 12, 17, 0.84)),
-    radial-gradient(1200px 500px at 15% -10%, rgba(56, 139, 253, 0.12), transparent 60%);
-}
-
 * {
   box-sizing: border-box;
 }
@@ -80,7 +57,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bg);
+  background: #ffffff;
   color: var(--text);
   font-family: var(--font);
   line-height: 1.5;
@@ -115,10 +92,12 @@ select {
   flex-wrap: wrap;
   margin-bottom: 20px;
   padding: 18px 20px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--bg-panel);
   box-shadow: var(--shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .brand {
