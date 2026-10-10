@@ -1,9 +1,11 @@
 :root {
   --bg: #0d1117;
-  --bg-panel: #161b22;
-  --bg-input: #0d1117;
+  --bg-panel: rgba(22, 27, 34, 0.55);
+  --bg-input: rgba(13, 17, 23, 0.5);
   --border: #30363d;
   --border-strong: #484f58;
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-blur: blur(14px) saturate(150%);
   --accent: #58a6ff;
   --green: #38bd58;
   --green-bg: rgba(56, 139, 253, 0.12);
@@ -29,8 +31,8 @@ body::after {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(13, 17, 23, 0.84), rgba(13, 17, 23, 0.92)),
-    radial-gradient(1200px 500px at 15% -10%, rgba(56, 139, 253, 0.1), transparent 60%),
+    linear-gradient(rgba(9, 12, 17, 0.68), rgba(9, 12, 17, 0.84)),
+    radial-gradient(1200px 500px at 15% -10%, rgba(56, 139, 253, 0.12), transparent 60%),
     url("/tution_attendance/assets/background.jpeg");
   background-size: cover, cover, cover;
   background-position: center;
@@ -104,6 +106,8 @@ select {
   border-radius: 8px;
   background: var(--bg-input);
   color: var(--green);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .brand-title {
@@ -123,11 +127,13 @@ select {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--accent);
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 5px 12px;
-  background: var(--bg-input);
+  background: rgba(255, 255, 255, 0.05);
   white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .tabs {
@@ -135,10 +141,12 @@ select {
   gap: 6px;
   margin-bottom: 18px;
   padding: 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--bg-panel);
   overflow-x: auto;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .tab {
@@ -197,19 +205,21 @@ select {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  background: var(--bg-panel);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .btn:hover {
   border-color: var(--border-strong);
-  background: #1b222b;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary {
@@ -232,10 +242,12 @@ select {
 
 .input {
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   background: var(--bg-input);
   color: var(--text);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .input:focus {
@@ -244,11 +256,13 @@ select {
 }
 
 .card {
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--bg-panel);
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .section-label {
@@ -447,9 +461,11 @@ tbody tr:hover {
 
 .scroll-x {
   overflow-x: auto;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--bg-panel);
+  background: rgba(13, 17, 23, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .mono {
@@ -484,7 +500,7 @@ tbody tr:hover {
 .month-btn {
   min-width: 62px;
   padding: 8px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   background: var(--bg-input);
   color: var(--muted);
@@ -492,6 +508,8 @@ tbody tr:hover {
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .month-btn.paid {
