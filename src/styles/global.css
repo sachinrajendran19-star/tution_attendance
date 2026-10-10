@@ -519,6 +519,25 @@ tbody tr:hover {
   align-items: center;
 }
 
+.link-name {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.link-name:hover {
+  text-decoration-style: solid;
+}
+
 .legend {
   display: flex;
   gap: 14px;

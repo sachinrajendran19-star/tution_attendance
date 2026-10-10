@@ -41,7 +41,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   import * as db from "../lib/tuition.js";
 
   let data = db.load();
-  const state = { tab: "today", day: db.todayISO() };
+  const state = { tab: "today", day: db.todayISO(), recordStudent: null };
 
   const $ = (sel) => document.querySelector(sel);
   const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), chart: $("#chart"), records: $("#records"), backup: $("#backup") };
@@ -202,7 +202,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         data.students.map((student) => {
           const { pct, marked } = db.attendanceRate(data, student.id);
           return el("tr", {},
-            el("td", {}, el("strong", { text: student.name }), el("div", { class: "kbd", text: "#" + student.id.slice(-4).toUpperCase() })),
+            el("td", {}, el("button", { class: "link-name", "data-action": "viewrecords", "data-sid": student.id, title: "View records", text: student.name }), el("div", { class: "kbd", text: "#" + student.id.slice(-4).toUpperCase() })),
             el("td", { text: student.klass || "\u2014" }),
             el("td", { text: student.contact || "\u2014" }),
             el("td", { text: student.fee ? "\u20B9" + student.fee : "\u2014" }),
@@ -367,9 +367,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
 
     const months = db.feeMonths();
-    panel.append(el("p", { class: "section-label", text: `Per-student record \u00b7 days present & fees by month` }));
+    const list = state.recordStudent ? data.students.filter((s) => s.id === state.recordStudent) : data.students;
 
-    for (const student of data.students) {
+    if (state.recordStudent) {
+      const picked = data.students.find((s) => s.id === state.recordStudent);
+      panel.append(
+        el("div", { class: "toolbar", style: "margin-bottom:14px" },
+          el("button", { class: "btn", "data-action": "allrecords", text: "\u2190 All students" }),
+          el("span", { class: "section-label", style: "margin:0", text: picked ? `Record for ${picked.name}` : "Student record" })
+        )
+      );
+    } else {
+      panel.append(el("p", { class: "section-label", text: `Per-student record \u00b7 days present & fees by month` }));
+    }
+
+    for (const student of list) {
       const rows = db.studentMonths(data, student.id, months);
       const overall = db.attendanceRate(data, student.id);
       const pendingMonths = rows.filter((r) => !r.paid);
@@ -377,7 +389,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
       const head = el("div", { class: "rec-head" },
         el("div", {},
-          el("p", { class: "row-name", text: student.name }),
+          el("button", { class: "link-name", style: "font-size:16px", "data-action": "viewrecords", "data-sid": student.id, text: student.name }),
           el("p", { class: "row-meta", text: [student.klass, student.contact].filter(Boolean).join(" \u00b7 ") || "\u2014" })
         ),
         el("div", { class: "rec-badges" },
@@ -562,6 +574,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     if (action === "tab") {
       setTab(btn.dataset.tab);
+    } else if (action === "viewrecords") {
+      state.recordStudent = sid;
+      setTab("records");
+      renderAll();
+    } else if (action === "allrecords") {
+      state.recordStudent = null;
+      renderAll();
     } else if (action === "prevday") {
       state.day = db.shiftDay(state.day, -1);
       renderAll();
