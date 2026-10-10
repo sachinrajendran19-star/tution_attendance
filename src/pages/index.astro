@@ -79,7 +79,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       return;
     }
 
-    const dayRec = () => (data.attendance[state.day] = data.attendance[state.day] || {});
+    const dayView = data.attendance[state.day] || {};
 
     const toolbar = el("div", { class: "toolbar" });
     const dayNav = el("div", { class: "day-nav" });
@@ -94,7 +94,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     const roll = el("div", { class: "roll" });
     for (const student of data.students) {
-      const status = dayRec()[student.id] || "";
+      const status = dayView[student.id] || "";
       const btns = ["present", "absent", "leave"].map((st) =>
         el("button", {
           class: `status-btn ${st}${status === st ? " on" : ""}`,
@@ -130,7 +130,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       );
     }
 
-    const dayCounts = db.overview(data).dayCounts;
+    const dayCounts = { present: 0, absent: 0, leave: 0 };
+    for (const status of Object.values(data.attendance[state.day] || {})) if (status) dayCounts[status]++;
     const summary = el("div", { class: "summary" },
       el("span", { class: "pill present", text: `${dayCounts.present || 0} present` }),
       el("span", { class: "pill absent", text: `${dayCounts.absent || 0} absent` }),
@@ -290,52 +291,66 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     );
   }
 
+  function chartLegend() {
+    return el("div", { class: "legend" },
+      el("span", { class: "l-present", text: "Present" }),
+      el("span", { class: "l-absent", text: "Absent" }),
+      el("span", { class: "l-leave", text: "Leave" })
+    );
+  }
+
+  function stackedBar(total, present, leave, absent, maxTotal, maxHeight, title) {
+    const barH = Math.max(3, Math.round((total / maxTotal) * maxHeight));
+    const segH = (n) => (total ? Math.round((n / total) * barH) : 0);
+    return el("div", { class: "bar", style: `height:${barH}px`, title },
+      el("div", { class: "seg seg-present", style: `height:${segH(present)}px` }),
+      el("div", { class: "seg seg-leave", style: `height:${segH(leave)}px` }),
+      el("div", { class: "seg seg-absent", style: `height:${segH(absent)}px` })
+    );
+  }
+
   function renderChart() {
     const panel = panels.chart;
     panel.replaceChildren();
 
+    const maxHeight = 200;
     const days = db.attendanceByDay(data);
     if (days.length === 0) {
-      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No attendance recorded yet. Mark a day in the Today tab to see the chart." })));
+      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No attendance recorded yet. Mark a day in the Today tab to see the charts." })));
       return;
     }
 
-    const maxTotal = Math.max(...days.map((d) => d.total), 1);
-    const maxHeight = 200;
+    const maxDay = Math.max(...days.map((d) => d.total), 1);
     const avg = Math.round(days.reduce((sum, d) => sum + d.pct, 0) / days.length);
-
-    const wrap = el("div", { class: "chart-wrap" });
+    const dayWrap = el("div", { class: "chart-wrap" });
     for (const d of days) {
-      const barH = Math.max(3, Math.round((d.total / maxTotal) * maxHeight));
-      const segH = (n) => (d.total ? Math.round((n / d.total) * barH) : 0);
-      const bar = el("div", {
-        class: "bar",
-        style: `height:${barH}px`,
-        title: `${db.readableDate(d.day)} \u2014 ${d.present} present, ${d.absent} absent, ${d.leave} leave (${d.pct}%)`,
-      },
-        el("div", { class: "seg seg-present", style: `height:${segH(d.present)}px` }),
-        el("div", { class: "seg seg-leave", style: `height:${segH(d.leave)}px` }),
-        el("div", { class: "seg seg-absent", style: `height:${segH(d.absent)}px` })
-      );
-      wrap.append(
+      dayWrap.append(
         el("div", { class: "chart-col" },
           el("span", { class: "chart-pct", text: `${d.pct}%` }),
-          bar,
+          stackedBar(d.total, d.present, d.leave, d.absent, maxDay, maxHeight, `${db.readableDate(d.day)} \u2014 ${d.present} present, ${d.absent} absent, ${d.leave} leave (${d.pct}%)`),
           el("span", { class: "chart-lbl", text: d.day.slice(5) })
+        )
+      );
+    }
+
+    const students = db.attendanceByStudent(data);
+    const maxStudent = Math.max(...students.map((s) => s.total), 1);
+    const studentWrap = el("div", { class: "chart-wrap" });
+    for (const s of students) {
+      studentWrap.append(
+        el("div", { class: "chart-col chart-col-name" },
+          el("span", { class: "chart-pct", text: s.total ? `${s.pct}%` : "\u2014" }),
+          stackedBar(s.total, s.present, s.leave, s.absent, maxStudent, maxHeight, `${s.student.name} \u2014 ${s.present} present, ${s.absent} absent, ${s.leave} leave (${s.pct}%)`),
+          el("span", { class: "chart-lbl chart-lbl-name", text: s.student.name })
         )
       );
     }
 
     panel.append(
       el("p", { class: "section-label", text: `Attendance by day \u00b7 average ${avg}% over ${days.length} day${days.length > 1 ? "s" : ""}` }),
-      el("div", { class: "card" },
-        wrap,
-        el("div", { class: "legend" },
-          el("span", { class: "l-present", text: "Present" }),
-          el("span", { class: "l-absent", text: "Absent" }),
-          el("span", { class: "l-leave", text: "Leave" })
-        )
-      )
+      el("div", { class: "card" }, dayWrap, chartLegend()),
+      el("p", { class: "section-label", style: "margin-top:20px", text: `Attendance by student \u00b7 ${students.length} student${students.length > 1 ? "s" : ""}` }),
+      el("div", { class: "card" }, studentWrap, chartLegend())
     );
   }
 

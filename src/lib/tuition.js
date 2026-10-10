@@ -147,3 +147,22 @@ export function attendanceByDay(data) {
       };
     });
 }
+
+export function attendanceByStudent(data) {
+  return data.students.map((student) => {
+    const counts = { present: 0, absent: 0, leave: 0 };
+    for (const day of Object.keys(data.attendance)) {
+      const status = data.attendance[day][student.id];
+      if (status) counts[status] = (counts[status] || 0) + 1;
+    }
+    const total = counts.present + counts.absent + counts.leave;
+    return {
+      student,
+      present: counts.present,
+      absent: counts.absent,
+      leave: counts.leave,
+      total,
+      pct: total ? Math.round((counts.present / total) * 100) : 0,
+    };
+  });
+}
