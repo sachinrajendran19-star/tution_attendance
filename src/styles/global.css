@@ -277,10 +277,10 @@ select {
 .section-label {
   display: block;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #17212e;
+  color: #000000;
   margin: 0 0 10px;
 }
 
@@ -298,8 +298,8 @@ select {
 .date-label {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: #17212e;
-  font-weight: 600;
+  color: #000000;
+  font-weight: 700;
 }
 
 .roll {
@@ -578,8 +578,8 @@ tbody tr:hover {
   display: flex;
   gap: 14px;
   font-size: 12px;
-  font-weight: 600;
-  color: #17212e;
+  font-weight: 700;
+  color: #000000;
   margin-top: 14px;
   flex-wrap: wrap;
 }
