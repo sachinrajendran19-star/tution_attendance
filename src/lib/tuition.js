@@ -127,3 +127,23 @@ export function overview(data) {
   }
   return { days, last: days.length ? days[days.length - 1] : null, dayCounts };
 }
+
+export function attendanceByDay(data) {
+  return Object.keys(data.attendance)
+    .sort()
+    .map((day) => {
+      const counts = { present: 0, absent: 0, leave: 0 };
+      for (const status of Object.values(data.attendance[day] || {})) {
+        if (status) counts[status] = (counts[status] || 0) + 1;
+      }
+      const total = counts.present + counts.absent + counts.leave;
+      return {
+        day,
+        present: counts.present,
+        absent: counts.absent,
+        leave: counts.leave,
+        total,
+        pct: total ? Math.round((counts.present / total) * 100) : 0,
+      };
+    });
+}

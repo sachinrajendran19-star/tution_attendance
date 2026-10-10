@@ -23,12 +23,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <button class="tab active" data-tab="today" data-action="tab">Today</button>
       <button class="tab" data-tab="students" data-action="tab">Students</button>
       <button class="tab" data-tab="fees" data-action="tab">Fees</button>
+      <button class="tab" data-tab="chart" data-action="tab">Chart</button>
       <button class="tab" data-tab="backup" data-action="tab">Backup</button>
     </nav>
 
     <section id="today" class="panel active"></section>
     <section id="students" class="panel"></section>
     <section id="fees" class="panel"></section>
+    <section id="chart" class="panel"></section>
     <section id="backup" class="panel"></section>
   </main>
 </BaseLayout>
@@ -40,7 +42,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   const state = { tab: "today", day: db.todayISO() };
 
   const $ = (sel) => document.querySelector(sel);
-  const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), backup: $("#backup") };
+  const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), chart: $("#chart"), backup: $("#backup") };
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -134,6 +136,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       el("span", { class: "pill absent", text: `${dayCounts.absent || 0} absent` }),
       el("span", { class: "pill leave", text: `${dayCounts.leave || 0} leave` }),
       el("button", { class: "btn", "data-action": "markall", text: "Mark all present" }),
+      el("button", { class: "btn", "data-action": "exportattendance", text: "Export for Excel (.csv)" }),
       el("button", { class: "btn btn-danger", "data-action": "clearday", text: "Clear this day" })
     );
 
@@ -169,7 +172,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const form = el("form", { class: "add-form", onsubmit: submitStudent },
       el("input", { class: "input", name: "name", placeholder: "Student name *", required: true }),
       el("input", { class: "input", name: "klass", placeholder: "Class / subject", style: "max-width:180px" }),
-      el("input", { class: "input", name: "contact", placeholder: "Contact number", style: "max-width:160px" }),
+      el("input", { class: "input", name: "contact", type: "tel", inputmode: "numeric", pattern: "[0-9]*", maxlength: "15", placeholder: "Contact number (digits only)", style: "max-width:200px", oninput: (e) => { e.target.value = e.target.value.replace(/\D/g, ""); } }),
       el("input", { class: "input", name: "fee", type: "number", min: "0", step: "50", placeholder: "Monthly fee (auto by class)", style: "max-width:170px" }),
       el("button", { class: "btn btn-primary", type: "submit", text: "Add student" }),
       el("button", { class: "btn", type: "button", "data-action": "applyfees", text: "Apply fees by class" })
@@ -188,7 +191,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           el("th", {}, el("span", { text: "Class" })),
           el("th", {}, el("span", { text: "Contact" })),
           el("th", {}, el("span", { text: "Monthly fee" })),
-          el("th", {}, el("span", { text: "Attendance" })),
+          el("th", {}, el("span", { text: "Attendance (by day)" })),
           el("th", {}, el("span", { text: "" }))
         )
       ),
@@ -219,7 +222,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const name = event.target.elements.name.value.trim();
     if (!name) return;
     const klass = event.target.elements.klass.value.trim();
-    const contact = event.target.elements.contact.value.trim();
+    const contact = event.target.elements.contact.value.replace(/\D/g, "");
     const fee = Number(event.target.elements.fee.value) || db.feeForClass(klass);
     data.students.push({ id: db.uid(), name, klass, contact, fee });
     db.save(data);
@@ -287,6 +290,55 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     );
   }
 
+  function renderChart() {
+    const panel = panels.chart;
+    panel.replaceChildren();
+
+    const days = db.attendanceByDay(data);
+    if (days.length === 0) {
+      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No attendance recorded yet. Mark a day in the Today tab to see the chart." })));
+      return;
+    }
+
+    const maxTotal = Math.max(...days.map((d) => d.total), 1);
+    const maxHeight = 200;
+    const avg = Math.round(days.reduce((sum, d) => sum + d.pct, 0) / days.length);
+
+    const wrap = el("div", { class: "chart-wrap" });
+    for (const d of days) {
+      const barH = Math.max(3, Math.round((d.total / maxTotal) * maxHeight));
+      const segH = (n) => (d.total ? Math.round((n / d.total) * barH) : 0);
+      const bar = el("div", {
+        class: "bar",
+        style: `height:${barH}px`,
+        title: `${db.readableDate(d.day)} \u2014 ${d.present} present, ${d.absent} absent, ${d.leave} leave (${d.pct}%)`,
+      },
+        el("div", { class: "seg seg-present", style: `height:${segH(d.present)}px` }),
+        el("div", { class: "seg seg-leave", style: `height:${segH(d.leave)}px` }),
+        el("div", { class: "seg seg-absent", style: `height:${segH(d.absent)}px` })
+      );
+      wrap.append(
+        el("div", { class: "chart-col" },
+          el("span", { class: "chart-pct", text: `${d.pct}%` }),
+          bar,
+          el("span", { class: "chart-lbl", text: d.day.slice(5) })
+        )
+      );
+    }
+
+    panel.append(
+      el("p", { class: "section-label", text: `Attendance by day \u00b7 average ${avg}% over ${days.length} day${days.length > 1 ? "s" : ""}` }),
+      el("div", { class: "card" },
+        wrap,
+        el("div", { class: "legend" },
+          el("span", { class: "l-present", text: "Present" }),
+          el("span", { class: "l-absent", text: "Absent" }),
+          el("span", { class: "l-leave", text: "Leave" })
+        )
+      )
+    );
+  }
+
   function renderBackup() {
     const panel = panels.backup;
     panel.replaceChildren();
@@ -316,6 +368,55 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: filename });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportAttendanceCsv() {
+    const days = Object.keys(data.attendance).sort();
+    if (days.length === 0) {
+      alert("No attendance recorded yet.");
+      return;
+    }
+    const esc = (value) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [];
+    rows.push(["Student", "Class", "Contact", ...days, "Present", "Absent", "Leave", "Attendance %"].map(esc).join(","));
+    for (const student of data.students) {
+      const cells = [];
+      let present = 0;
+      let absent = 0;
+      let leave = 0;
+      for (const day of days) {
+        const status = (data.attendance[day] || {})[student.id];
+        if (status === "present") { cells.push("P"); present++; }
+        else if (status === "absent") { cells.push("A"); absent++; }
+        else if (status === "leave") { cells.push("L"); leave++; }
+        else cells.push("");
+      }
+      const marked = present + absent + leave;
+      rows.push(
+        [student.name, student.klass || "", student.contact || "", ...cells, present, absent, leave, marked ? Math.round((present / marked) * 100) + "%" : ""]
+          .map(esc)
+          .join(",")
+      );
+    }
+    const dayRow = ["Present per day", "", ""];
+    for (const day of days) {
+      let count = 0;
+      for (const status of Object.values(data.attendance[day])) if (status === "present") count++;
+      dayRow.push(count);
+    }
+    dayRow.push("", "", "", "");
+    rows.push(dayRow.map(esc).join(","));
+    downloadBlob("\uFEFF" + rows.join("\r\n"), `tution-attendance-${db.todayISO()}.csv`, "text/csv;charset=utf-8");
   }
 
   async function importBackup(event) {
@@ -351,6 +452,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     renderToday();
     renderStudents();
     renderFees();
+    renderChart();
     renderBackup();
   }
 
@@ -416,6 +518,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       mark();
     } else if (action === "export") {
       exportBackup();
+    } else if (action === "exportattendance") {
+      exportAttendanceCsv();
     } else if (action === "reset") {
       if (!confirm("Delete ALL students, attendance and fees? Export a backup first if unsure.")) return;
       data = db.emptyData();
