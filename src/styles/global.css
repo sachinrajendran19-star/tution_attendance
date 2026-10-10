@@ -503,6 +503,22 @@ tbody tr:hover {
   align-items: center;
 }
 
+.rec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.rec-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .legend {
   display: flex;
   gap: 14px;

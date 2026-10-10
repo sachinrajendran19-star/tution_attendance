@@ -24,6 +24,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <button class="tab" data-tab="students" data-action="tab">Students</button>
       <button class="tab" data-tab="fees" data-action="tab">Fees</button>
       <button class="tab" data-tab="chart" data-action="tab">Chart</button>
+      <button class="tab" data-tab="records" data-action="tab">Records</button>
       <button class="tab" data-tab="backup" data-action="tab">Backup</button>
     </nav>
 
@@ -31,6 +32,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <section id="students" class="panel"></section>
     <section id="fees" class="panel"></section>
     <section id="chart" class="panel"></section>
+    <section id="records" class="panel"></section>
     <section id="backup" class="panel"></section>
   </main>
 </BaseLayout>
@@ -42,7 +44,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   const state = { tab: "today", day: db.todayISO() };
 
   const $ = (sel) => document.querySelector(sel);
-  const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), chart: $("#chart"), backup: $("#backup") };
+  const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), chart: $("#chart"), records: $("#records"), backup: $("#backup") };
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -355,6 +357,79 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     );
   }
 
+  function renderRecords() {
+    const panel = panels.records;
+    panel.replaceChildren();
+
+    if (data.students.length === 0) {
+      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No students yet. Add students in the Students tab." })));
+      return;
+    }
+
+    const months = db.feeMonths();
+    panel.append(el("p", { class: "section-label", text: `Per-student record \u00b7 days present & fees by month` }));
+
+    for (const student of data.students) {
+      const rows = db.studentMonths(data, student.id, months);
+      const overall = db.attendanceRate(data, student.id);
+      const pendingMonths = rows.filter((r) => !r.paid);
+      const pendingAmount = pendingMonths.length * (student.fee || 0);
+
+      const head = el("div", { class: "rec-head" },
+        el("div", {},
+          el("p", { class: "row-name", text: student.name }),
+          el("p", { class: "row-meta", text: [student.klass, student.contact].filter(Boolean).join(" \u00b7 ") || "\u2014" })
+        ),
+        el("div", { class: "rec-badges" },
+          overall.marked
+            ? el("span", { class: "pill " + (overall.pct >= 80 ? "present" : overall.pct >= 50 ? "leave" : "absent"), text: `${overall.pct}% present` })
+            : el("span", { class: "pill", text: "no attendance" }),
+          el("span", { class: "kbd", text: student.fee ? `\u20B9${student.fee}/month` : "fee not set" }),
+          pendingMonths.length
+            ? el("span", { class: "kbd", text: `${pendingMonths.length} month(s) pending \u00b7 \u20B9${pendingAmount}` })
+            : el("span", { class: "pill present", text: "fees clear" })
+        )
+      );
+
+      const table = el("table", {},
+        el("thead", {},
+          el("tr", {},
+            el("th", { text: "Month" }),
+            el("th", { text: "Present" }),
+            el("th", { text: "Absent" }),
+            el("th", { text: "Leave" }),
+            el("th", { text: "Days marked" }),
+            el("th", { text: "Attendance" }),
+            el("th", { text: "Fee" })
+          )
+        ),
+        el("tbody", {},
+          rows.map((r) =>
+            el("tr", {},
+              el("td", { class: "kbd", text: db.readableMonth(r.month) }),
+              el("td", {}, r.present ? el("span", { class: "pill present", text: String(r.present) }) : el("span", { class: "kbd", text: "0" })),
+              el("td", {}, r.absent ? el("span", { class: "pill absent", text: String(r.absent) }) : el("span", { class: "kbd", text: "0" })),
+              el("td", {}, r.leave ? el("span", { class: "pill leave", text: String(r.leave) }) : el("span", { class: "kbd", text: "0" })),
+              el("td", { class: "kbd", text: String(r.total) }),
+              el("td", { class: "kbd", text: r.total ? `${r.pct}%` : "\u2014" }),
+              el("td", {},
+                el("button", {
+                  class: "month-btn" + (r.paid ? " paid" : ""),
+                  "data-action": "togglefee",
+                  "data-sid": student.id,
+                  "data-month": r.month,
+                  text: r.paid ? "Paid" : "Pending",
+                })
+              )
+            )
+          )
+        )
+      );
+
+      panel.append(el("div", { class: "card", style: "margin-bottom:14px" }, head, el("div", { class: "scroll-x" }, table)));
+    }
+  }
+
   function renderBackup() {
     const panel = panels.backup;
     panel.replaceChildren();
@@ -469,6 +544,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     renderStudents();
     renderFees();
     renderChart();
+    renderRecords();
     renderBackup();
   }
 

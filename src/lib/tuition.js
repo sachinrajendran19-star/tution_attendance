@@ -31,6 +31,11 @@ export function readableDate(iso) {
   });
 }
 
+export function readableMonth(month) {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
+
 export function feeMonths(futureCount = 6) {
   const now = new Date();
   const startYear = now.getMonth() < 7 ? now.getFullYear() - 1 : now.getFullYear();
@@ -163,6 +168,28 @@ export function attendanceByStudent(data) {
       leave: counts.leave,
       total,
       pct: total ? Math.round((counts.present / total) * 100) : 0,
+    };
+  });
+}
+
+export function studentMonths(data, studentId, months) {
+  const paid = data.fees[studentId] || [];
+  return months.map((month) => {
+    const counts = { present: 0, absent: 0, leave: 0 };
+    for (const day of Object.keys(data.attendance)) {
+      if (!day.startsWith(month)) continue;
+      const status = data.attendance[day][studentId];
+      if (status) counts[status] = (counts[status] || 0) + 1;
+    }
+    const total = counts.present + counts.absent + counts.leave;
+    return {
+      month,
+      present: counts.present,
+      absent: counts.absent,
+      leave: counts.leave,
+      total,
+      pct: total ? Math.round((counts.present / total) * 100) : 0,
+      paid: paid.includes(month),
     };
   });
 }
