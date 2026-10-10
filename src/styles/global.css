@@ -29,8 +29,12 @@ body::after {
   inset: 0;
   z-index: -1;
   background-image:
-    radial-gradient(1200px 500px at 15% -10%, rgba(56, 139, 253, 0.09), transparent 60%),
-    radial-gradient(900px 420px at 100% 10%, rgba(56, 189, 88, 0.06), transparent 60%);
+    linear-gradient(rgba(13, 17, 23, 0.84), rgba(13, 17, 23, 0.92)),
+    radial-gradient(1200px 500px at 15% -10%, rgba(56, 139, 253, 0.1), transparent 60%),
+    url("/tution_attendance/assets/background.jpeg");
+  background-size: cover, cover, cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 * {
