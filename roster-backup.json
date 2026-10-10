@@ -1,0 +1,21 @@
+{
+  "students": [
+    { "id": "sambath", "name": "Sambath", "klass": "9th", "contact": "", "fee": 1000 },
+    { "id": "harikrishna", "name": "HariKrishna", "klass": "6th", "contact": "", "fee": 800 },
+    { "id": "sudharsan", "name": "Sudharsan", "klass": "6th", "contact": "", "fee": 800 },
+    { "id": "aswanth", "name": "Aswanth", "klass": "3rd", "contact": "", "fee": 600 },
+    { "id": "burinesh", "name": "Burinesh", "klass": "5th", "contact": "", "fee": 600 },
+    { "id": "avinash", "name": "Avinash", "klass": "3rd", "contact": "", "fee": 600 },
+    { "id": "nimisha", "name": "Nimisha", "klass": "2nd", "contact": "", "fee": 600 },
+    { "id": "aradhana", "name": "Aradhana", "klass": "7th", "contact": "", "fee": 800 },
+    { "id": "rithika", "name": "Rithika", "klass": "3rd", "contact": "", "fee": 600 },
+    { "id": "mugilan", "name": "Mugilan", "klass": "9th", "contact": "", "fee": 1000 },
+    { "id": "dharshini", "name": "Dharshini", "klass": "2nd", "contact": "", "fee": 600 },
+    { "id": "gopika", "name": "Gopika", "klass": "7th", "contact": "", "fee": 800 },
+    { "id": "prasana", "name": "Prasana", "klass": "9th", "contact": "", "fee": 1000 },
+    { "id": "bhuvaneshwari", "name": "Bhuvaneshwari", "klass": "7th", "contact": "", "fee": 800 },
+    { "id": "praveena", "name": "Praveena", "klass": "4th", "contact": "", "fee": 600 }
+  ],
+  "attendance": {},
+  "fees": {}
+}

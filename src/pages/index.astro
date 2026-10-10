@@ -1,0 +1,429 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout>
+  <main class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="18" height="18">
+            <path fill="currentColor" d="M8.7 1.5a.75.75 0 0 0-1.4 0L6.3 5.14a2.4 2.4 0 0 1-1.46 1.46L1.5 7.3a.75.75 0 0 0 0 1.4l3.34 1.2a2.4 2.4 0 0 1 1.46 1.46l1.16 3.14a.75.75 0 0 0 1.4 0l1.2-3.34a2.4 2.4 0 0 1 1.46-1.46l3.38-1.36a.75.75 0 0 0 0-1.4l-3.34-1.2a2.4 2.4 0 0 1-1.46-1.46L8.7 1.5Z" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="brand-title">Tution Attendance</h1>
+          <span class="brand-sub">Attendance &amp; fees &middot; saved in this browser</span>
+        </div>
+      </div>
+      <span class="day-badge" id="dayBadge">&mdash;</span>
+    </header>
+
+    <nav class="tabs" aria-label="Sections">
+      <button class="tab active" data-tab="today" data-action="tab">Today</button>
+      <button class="tab" data-tab="students" data-action="tab">Students</button>
+      <button class="tab" data-tab="fees" data-action="tab">Fees</button>
+      <button class="tab" data-tab="backup" data-action="tab">Backup</button>
+    </nav>
+
+    <section id="today" class="panel active"></section>
+    <section id="students" class="panel"></section>
+    <section id="fees" class="panel"></section>
+    <section id="backup" class="panel"></section>
+  </main>
+</BaseLayout>
+
+<script>
+  import * as db from "../lib/tuition.js";
+
+  let data = db.load();
+  const state = { tab: "today", day: db.todayISO() };
+
+  const $ = (sel) => document.querySelector(sel);
+  const panels = { today: $("#today"), students: $("#students"), fees: $("#fees"), backup: $("#backup") };
+
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const [key, value] of Object.entries(attrs)) {
+        if (value == null) continue;
+        if (key === "class") node.className = value;
+        else if (key === "text") node.textContent = value;
+        else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+        else node.setAttribute(key, value);
+      }
+    }
+    for (const child of children.flat()) {
+      if (child == null) continue;
+      node.append(child);
+    }
+    return node;
+  }
+
+  function statusPill(sid) {
+    const status = (data.attendance[state.day] || {})[sid];
+    if (status) return el("span", { class: `pill ${status}`, text: status.toUpperCase() });
+    return null;
+  }
+
+  function renderToday() {
+    const panel = panels.today;
+    panel.replaceChildren();
+
+    if (data.students.length === 0) {
+      panel.append(
+        el("div", { class: "card" }, el("p", { class: "empty", text: "No students yet. Go to Students to add your first one." }))
+      );
+      return;
+    }
+
+    const dayRec = () => (data.attendance[state.day] = data.attendance[state.day] || {});
+
+    const toolbar = el("div", { class: "toolbar" });
+    const dayNav = el("div", { class: "day-nav" });
+    dayNav.append(
+      el("button", { class: "btn", "data-action": "prevday", text: "\u2190 Prev" }),
+      el("button", { class: "btn", "data-action": "nextday", text: "Next \u2192" }),
+      el("button", { class: "btn", "data-action": "setday", text: "Today" }),
+      el("input", { class: "input mono", type: "date", value: state.day, onchange: (e) => { state.day = e.target.value; renderToday(); renderHeader(); } }),
+      el("span", { class: "date-label", text: db.readableDate(state.day) })
+    );
+    toolbar.append(dayNav);
+
+    const roll = el("div", { class: "roll" });
+    for (const student of data.students) {
+      const status = dayRec()[student.id] || "";
+      const btns = ["present", "absent", "leave"].map((st) =>
+        el("button", {
+          class: `status-btn ${st}${status === st ? " on" : ""}`,
+          "data-action": "mark",
+          "data-sid": student.id,
+          "data-status": st,
+          text: st === "present" ? "P" : st === "absent" ? "A" : "L",
+        })
+      );
+      btns.push(
+        el("button", {
+          class: `status-btn ${status ? "" : "on"} muted`,
+          "data-action": "mark",
+          "data-sid": student.id,
+          "data-status": "",
+          text: "\u2013",
+          title: "Clear",
+        })
+      );
+
+      const left = el("div", { class: "row-main" },
+        el("p", { class: "row-name", text: student.name }),
+        el("p", { class: "row-meta", text: [student.klass, student.contact].filter(Boolean).join(" \u00b7 ") })
+      );
+      const right = el("div", { class: "status-btns" }, btns);
+
+      roll.append(
+        el("div", { class: "row" },
+          el("div", { class: "row-id", text: student.id.slice(-4).toUpperCase() }),
+          left,
+          right
+        )
+      );
+    }
+
+    const dayCounts = db.overview(data).dayCounts;
+    const summary = el("div", { class: "summary" },
+      el("span", { class: "pill present", text: `${dayCounts.present || 0} present` }),
+      el("span", { class: "pill absent", text: `${dayCounts.absent || 0} absent` }),
+      el("span", { class: "pill leave", text: `${dayCounts.leave || 0} leave` }),
+      el("button", { class: "btn", "data-action": "markall", text: "Mark all present" }),
+      el("button", { class: "btn btn-danger", "data-action": "clearday", text: "Clear this day" })
+    );
+
+    panel.append(toolbar);
+
+    const recent = db.overview(data).days.filter((d) => d !== state.day).slice(-10).reverse();
+    let history = null;
+    if (recent.length) {
+      history = el("div", { class: "card", style: "margin-top:16px" },
+        el("p", { class: "section-label", text: "Recent days" }),
+        el("div", { class: "history-list" },
+          recent.map((day) => {
+            const counts = { present: 0, absent: 0, leave: 0 };
+            for (const st of Object.values(data.attendance[day] || {})) if (st) counts[st]++;
+            const sub = el("span", { class: "kbd", text: `${counts.present}P  ${counts.absent}A  ${counts.leave}L` });
+            return el("div", { class: "history-row", "data-action": "jumpday", "data-day": day },
+              el("span", { class: "history-date", text: db.readableDate(day).split(",")[0] + "," + db.readableDate(day).split(",")[1] + " " + db.readableDate(day).split(",")[2] }),
+              sub
+            );
+          })
+        )
+      );
+    }
+
+    panel.append(roll, summary, history);
+    renderHeader();
+  }
+
+  function renderStudents() {
+    const panel = panels.students;
+    panel.replaceChildren();
+
+    const form = el("form", { class: "add-form", onsubmit: submitStudent },
+      el("input", { class: "input", name: "name", placeholder: "Student name *", required: true }),
+      el("input", { class: "input", name: "klass", placeholder: "Class / subject", style: "max-width:180px" }),
+      el("input", { class: "input", name: "contact", placeholder: "Contact number", style: "max-width:160px" }),
+      el("input", { class: "input", name: "fee", type: "number", min: "0", step: "50", placeholder: "Monthly fee (auto by class)", style: "max-width:170px" }),
+      el("button", { class: "btn btn-primary", type: "submit", text: "Add student" }),
+      el("button", { class: "btn", type: "button", "data-action": "applyfees", text: "Apply fees by class" })
+    );
+    panel.append(form);
+
+    if (data.students.length === 0) {
+      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No students yet. Add your first student (name at minimum)." })));
+      return;
+    }
+
+    const table = el("table", {},
+      el("thead", {},
+        el("tr", {},
+          el("th", {}, el("span", { text: "Student" })),
+          el("th", {}, el("span", { text: "Class" })),
+          el("th", {}, el("span", { text: "Contact" })),
+          el("th", {}, el("span", { text: "Monthly fee" })),
+          el("th", {}, el("span", { text: "Attendance" })),
+          el("th", {}, el("span", { text: "" }))
+        )
+      ),
+      el("tbody", {},
+        data.students.map((student) => {
+          const { pct, marked } = db.attendanceRate(data, student.id);
+          return el("tr", {},
+            el("td", {}, el("strong", { text: student.name }), el("div", { class: "kbd", text: "#" + student.id.slice(-4).toUpperCase() })),
+            el("td", { text: student.klass || "\u2014" }),
+            el("td", { text: student.contact || "\u2014" }),
+            el("td", { text: student.fee ? "\u20B9" + student.fee : "\u2014" }),
+            el("td", {},
+              pct == null
+                ? el("span", { class: "kbd", text: "not marked yet" })
+                : el("span", { class: `pill ${pct >= 80 ? "present" : pct >= 50 ? "leave" : "absent"}`, text: `${pct}% (${marked} days)` })
+            ),
+            el("td", {}, el("button", { class: "btn btn-danger", "data-action": "deletestudent", "data-sid": student.id, text: "Remove" }))
+          );
+        })
+      )
+    );
+
+    panel.append(el("div", { class: "scroll-x" }, table));
+  }
+
+  function submitStudent(event) {
+    event.preventDefault();
+    const name = event.target.elements.name.value.trim();
+    if (!name) return;
+    const klass = event.target.elements.klass.value.trim();
+    const contact = event.target.elements.contact.value.trim();
+    const fee = Number(event.target.elements.fee.value) || db.feeForClass(klass);
+    data.students.push({ id: db.uid(), name, klass, contact, fee });
+    db.save(data);
+    renderStudents();
+    renderFees();
+    renderHeader();
+    event.target.reset();
+  }
+
+  function renderFees() {
+    const panel = panels.fees;
+    panel.replaceChildren();
+
+    if (data.students.length === 0) {
+      panel.append(el("div", { class: "card" }, el("p", { class: "empty", text: "No students yet." })));
+      return;
+    }
+
+    const months = db.feeMonths(6);
+    let withPending = 0;
+
+    const grid = el("div", { class: "fee-grid" });
+    for (const student of data.students) {
+      const paid = new Set(data.fees[student.id] || []);
+      const pending = months.filter((m) => !paid.has(m));
+      if (pending.length) withPending++;
+
+      const monthBtns = months.map((month) =>
+        el("button", {
+          class: `month-btn${paid.has(month) ? " paid" : ""}`,
+          "data-action": "togglefee",
+          "data-sid": student.id,
+          "data-month": month,
+          text: month,
+          title: paid.has(month) ? "Paid \u2014 click to unmark" : "Not paid \u2014 click to mark paid",
+        })
+      );
+
+      const meta = el("div", { class: "fee-meta" },
+        el("span", { class: "kbd", text: pending.length ? `${pending.length} month${pending.length > 1 ? "s" : ""} pending` : "All clear" }),
+        student.fee && pending.length
+          ? el("span", { class: "pill leave", text: `\u20B9${pending.length * student.fee} due` })
+          : null,
+        student.fee ? el("span", { class: "kbd", text: `\u20B9${student.fee}/month` }) : null
+      );
+
+      grid.append(
+        el("div", { class: "row" },
+          el("div", { class: "row-main" },
+            el("p", { class: "row-name", text: student.name }),
+            meta
+          ),
+          el("div", { class: "status-btns", style: "flex-wrap:wrap;gap:6px" }, monthBtns)
+        )
+      );
+    }
+
+    panel.append(
+      el("p", { class: "section-label", text: `August to next 6 months \u00b7 ${withPending} of ${data.students.length} students have pending months` }),
+      grid,
+      el("div", { class: "legend" },
+        el("span", { class: "l-paid", text: "Paid" }),
+        el("span", { class: "l-pending", text: "Pending" })
+      )
+    );
+  }
+
+  function renderBackup() {
+    const panel = panels.backup;
+    panel.replaceChildren();
+
+    const overview = db.overview(data);
+    panel.append(
+      el("div", { class: "card" },
+        el("p", { class: "section-label", text: "Backup & restore" }),
+        el("p", { class: "kbd", text: `${data.students.length} students \u00b7 ${overview.days.length} attendance days recorded` }),
+        el("p", { style: "color:var(--muted);font-size:13px", text: "Data is stored only in this browser (localStorage). Export a backup file regularly so it survives a browser reset or device change." }),
+        el("div", { class: "toolbar", style: "margin-top:10px;margin-bottom:0" },
+          el("button", { class: "btn btn-primary", "data-action": "export", text: "Export backup (.json)" }),
+          el("label", { class: "btn", text: "Import backup" },
+            el("input", { class: "input", type: "file", accept: "application/json,.json", style: "display:none", onchange: importBackup })
+          ),
+          el("button", { class: "btn btn-danger", "data-action": "reset", text: "Reset all data" })
+        )
+      )
+    );
+  }
+
+  function exportBackup() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: `tution-backup-${db.todayISO()}.json` });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!parsed || !Array.isArray(parsed.students)) throw new Error("shape");
+      data = {
+        students: parsed.students,
+        attendance: parsed.attendance && typeof parsed.attendance === "object" ? parsed.attendance : {},
+        fees: parsed.fees && typeof parsed.fees === "object" ? parsed.fees : {},
+      };
+      db.save(data);
+      renderAll();
+      alert("Backup restored successfully.");
+    } catch {
+      alert("That file is not a valid backup.");
+    }
+    event.target.value = "";
+  }
+
+  function mark() {
+    db.save(data);
+    renderAll();
+  }
+
+  function renderHeader() {
+    $("#dayBadge").textContent = db.readableDate(state.day);
+  }
+
+  function renderAll() {
+    renderToday();
+    renderStudents();
+    renderFees();
+    renderBackup();
+  }
+
+  function setTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+    Object.entries(panels).forEach(([name, panel]) => panel.classList.toggle("active", name === tab));
+  }
+
+  document.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const sid = btn.dataset.sid;
+
+    if (action === "tab") {
+      setTab(btn.dataset.tab);
+    } else if (action === "prevday") {
+      state.day = db.shiftDay(state.day, -1);
+      renderAll();
+    } else if (action === "nextday") {
+      state.day = db.shiftDay(state.day, 1);
+      renderAll();
+    } else if (action === "setday") {
+      state.day = db.todayISO();
+      renderAll();
+    } else if (action === "jumpday") {
+      state.day = btn.dataset.day;
+      renderAll();
+    } else if (action === "mark") {
+      const rec = (data.attendance[state.day] = data.attendance[state.day] || {});
+      rec[sid] = btn.dataset.status || "";
+      mark();
+    } else if (action === "markall") {
+      const rec = (data.attendance[state.day] = data.attendance[state.day] || {});
+      for (const student of data.students) rec[student.id] = "present";
+      mark();
+    } else if (action === "clearday") {
+      delete data.attendance[state.day];
+      mark();
+    } else if (action === "applyfees") {
+      let changed = 0;
+      for (const student of data.students) {
+        const fee = db.feeForClass(student.klass);
+        if (student.fee !== fee) {
+          student.fee = fee;
+          changed++;
+        }
+      }
+      db.save(data);
+      renderAll();
+      alert(changed ? `Fees set by class for ${changed} student(s).` : "All fees already match the class structure.");
+    } else if (action === "togglefee") {
+      const month = btn.dataset.month;
+      data.fees[sid] = data.fees[sid] || [];
+      data.fees[sid] = data.fees[sid].includes(month) ? data.fees[sid].filter((m) => m !== month) : [...data.fees[sid], month];
+      mark();
+    } else if (action === "deletestudent") {
+      if (!confirm(`Remove ${data.students.find((s) => s.id === sid)?.name || "student"}? This deletes their attendance history too.`)) return;
+      data.students = data.students.filter((s) => s.id !== sid);
+      for (const day of Object.keys(data.attendance)) delete data.attendance[day][sid];
+      delete data.fees[sid];
+      mark();
+    } else if (action === "export") {
+      exportBackup();
+    } else if (action === "reset") {
+      if (!confirm("Delete ALL students, attendance and fees? Export a backup first if unsure.")) return;
+      data = db.emptyData();
+      db.save(data);
+      renderAll();
+    }
+  });
+
+  renderAll();
+  setTab("today");
+</script>
